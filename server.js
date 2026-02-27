@@ -4,7 +4,7 @@ const multer = require("multer");
 const fs = require("fs");
 
 const app = express();
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
