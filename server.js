@@ -26,7 +26,7 @@ app.use((req, res, next) => {
     return next();
   }
   const token = req.cookies?.auth;
-  if (token !== process.env.SITE_SECRET) {
+  if (!token || token !== process.env.SITE_SECRET)
     return res.redirect("/login.html"); // You must create this file
   }
   next();
@@ -73,7 +73,7 @@ app.post("/send-email", upload.single("pdf"), async (req, res) => {
       if (req.file) {
         mailOptions.attachments.push({
           filename: req.file.originalname,
-          path: req.file.buffer,
+          content: req.file.buffer,
           contentType: "application/pdf",
         });
       }
