@@ -16,7 +16,15 @@ const upload = multer({
 });
 
 app.use((req, res, next) => {
-  if (req.path === "/login") return next();
+  const publicPaths = [
+    "/login.html",
+    "/login",
+    "/favicon.ico"
+  ];
+
+  if (publicPaths.includes(req.path)) {
+    return next();
+  }
   const token = req.cookies?.auth;
   if (token !== process.env.SITE_SECRET) {
     return res.redirect("/login.html"); // You must create this file
@@ -31,7 +39,7 @@ app.post("/login", (req, res) => {
   if (secret === process.env.SITE_SECRET) {
     res.cookie("auth", secret, {
       httpOnly: true,
-      secure: false, // change to true in production (HTTPS)
+      secure: true,
       sameSite: "strict",
       maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
     });
