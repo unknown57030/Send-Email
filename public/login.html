@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Enter Secret</h2>
+  <input type="password" id="secret" />
+  <button onclick="login()">Login</button>
+
+  <script>
+    async function login() {
+      const secret = document.getElementById("secret").value;
+
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret })
+      });
+
+      if (res.ok) {
+        window.location.href = "/";
+      } else {
+        alert("Invalid Secret");
+      }
+    }
+  </script>
+</body>
+</html>
