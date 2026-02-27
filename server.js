@@ -2,7 +2,6 @@ const express = require("express");
 const nodemailer = require("nodemailer");
 const multer = require("multer");
 const fs = require("fs");
-require("dotenv").config();
 
 const app = express();
 app.use(express.static("public"));
