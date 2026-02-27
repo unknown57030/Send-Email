@@ -3,15 +3,41 @@ const nodemailer = require("nodemailer");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const cookieParser = require("cookie-parser");
 
 const app = express();
-app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 const upload = multer({
   storage: multer.memoryStorage(),
+});
+
+app.use((req, res, next) => {
+  if (req.path === "/login") return next();
+  const token = req.cookies?.auth;
+  if (token !== process.env.SITE_SECRET) {
+    return res.redirect("/login.html"); // You must create this file
+  }
+  next();
+});
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.post("/login", (req, res) => {
+  const { secret } = req.body;
+  if (secret === process.env.SITE_SECRET) {
+    res.cookie("auth", secret, {
+      httpOnly: true,
+      secure: false, // change to true in production (HTTPS)
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
+    });
+    return res.json({ success: true });
+  }
+  res.status(401).json({ success: false });
 });
 
 app.post("/send-email", upload.single("pdf"), async (req, res) => {
