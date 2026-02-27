@@ -26,7 +26,7 @@ app.use((req, res, next) => {
     return next();
   }
   const token = req.cookies?.auth;
-  if (!token || token !== process.env.SITE_SECRET)
+  if (!token || token !== process.env.SITE_SECRET) {
     return res.redirect("/login.html"); // You must create this file
   }
   next();
