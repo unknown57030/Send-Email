@@ -9,7 +9,9 @@ app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const upload = multer({ dest: "uploads/" });
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
 
 app.post("/send-email", upload.single("pdf"), async (req, res) => {
   try {
@@ -36,16 +38,12 @@ app.post("/send-email", upload.single("pdf"), async (req, res) => {
       if (req.file) {
         mailOptions.attachments.push({
           filename: req.file.originalname,
-          path: req.file.path,
+          path: req.file.buffer,
           contentType: "application/pdf",
         });
       }
 
       await transporter.sendMail(mailOptions);
-    }
-
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
     }
 
     res.send("✅ Email sent successfully!");
