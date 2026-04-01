@@ -1,24 +1,204 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Email Sender</title>
-</head>
-<body>
-  <h2>Send Email</h2>
-  <form action="/send-email" method="POST" enctype="multipart/form-data">
-    <label>Email IDs (comma separated):</label><br>
-    <input type="text" name="emails" style="width:300px;" required><br><br>
 
-    <label>Subject:</label><br>
-    <input type="text" name="subject" style="width:300px;" required><br><br>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f4f4f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .page {
+    max-width: 580px; margin: 32px auto; padding: 28px 32px;
+    background: #fff; border-radius: 14px;
+    border: 1px solid #e2e2dc; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+  .page-title { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+  .top-link { font-size: 13px; color: #4f6ef7; text-decoration: none; font-weight: 500; }
+  .top-link:hover { text-decoration: underline; }
 
-    <label>Description:</label><br>
-    <textarea name="description" rows="5" cols="40" required></textarea><br><br>
+  .section-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+  .template-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .tab-btn {
+    padding: 7px 18px; border-radius: 20px;
+    border: 1.5px solid #d5d5cf;
+    background: #fafaf8; color: #555;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .tab-btn:hover { border-color: #aaa; color: #222; background: #f0f0ec; }
+  .tab-btn.active {
+    background: #1a1a1a; color: #fff;
+    border-color: #1a1a1a;
+  }
+  .no-templates { font-size: 13px; color: #aaa; padding: 4px 0; }
 
-    <label>Attach PDF:</label><br>
-    <input type="file" name="pdf" accept="application/pdf"><br><br>
+  .divider { height: 1px; background: #ebebE7; margin: 0 0 22px; }
 
-    <button type="submit">Send</button>
-  </form>
-</body>
-</html>
+  .form-grid { display: flex; flex-direction: column; gap: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%; padding: 10px 14px;
+    border-radius: 8px; border: 1.5px solid #ddddd8;
+    background: #fafaf8; color: #1a1a1a;
+    font-size: 14px; font-family: inherit;
+    resize: vertical; transition: border-color 0.15s;
+  }
+  .field input::placeholder, .field textarea::placeholder { color: #bbb; }
+  .field input:focus, .field textarea:focus {
+    outline: none; border-color: #4f6ef7;
+    background: #fff; box-shadow: 0 0 0 3px rgba(79,110,247,0.1);
+  }
+
+  .file-area {
+    border: 1.5px dashed #ccccc8; border-radius: 8px;
+    padding: 16px; text-align: center; cursor: pointer;
+    background: #fafaf8; transition: border-color 0.15s, background 0.15s;
+  }
+  .file-area:hover { border-color: #4f6ef7; background: #f5f6ff; }
+  .file-area input { display: none; }
+  .file-icon { font-size: 20px; margin-bottom: 4px; }
+  .file-label { font-size: 13px; color: #888; }
+  .file-name { font-size: 13px; color: #4f6ef7; margin-top: 4px; font-weight: 500; }
+
+  .actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-send {
+    flex: 1; padding: 11px; border-radius: 8px;
+    border: none; background: #1a1a1a;
+    color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-send:hover { background: #333; }
+  .btn-clear {
+    padding: 11px 22px; border-radius: 8px;
+    border: 1.5px solid #ddddd8; background: #fafaf8;
+    color: #666; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-clear:hover { background: #f0f0ec; }
+
+  .result-msg { margin-top: 14px; padding: 11px 16px; border-radius: 8px; font-size: 13px; display: none; font-weight: 500; }
+  .result-msg.success { background: #edfaf4; color: #1a7a4a; border: 1px solid #b2e8cf; }
+  .result-msg.error { background: #fdf0f0; color: #c0392b; border: 1px solid #f5c0bb; }
+</style>
+
+<div style="background:#f4f4f0; min-height:100vh; padding:32px 16px;">
+<div class="page">
+  <div class="top-bar">
+    <span class="page-title">Send email</span>
+    <a href="templates.html" class="top-link">Manage templates →</a>
+  </div>
+
+  <div class="section-label">Template</div>
+  <div class="template-tabs" id="templateTabs"></div>
+
+  <div class="divider"></div>
+
+  <div class="form-grid">
+    <div class="field">
+      <label>To</label>
+      <input type="text" id="emails" placeholder="john@example.com, jane@example.com" />
+    </div>
+    <div class="field">
+      <label>Subject</label>
+      <input type="text" id="subject" placeholder="Enter subject line" />
+    </div>
+    <div class="field">
+      <label>Message</label>
+      <textarea id="description" rows="5" placeholder="Write your message here..."></textarea>
+    </div>
+    <div class="field">
+      <label>Attachment</label>
+      <div class="file-area" onclick="document.getElementById('pdf').click()">
+        <input type="file" id="pdf" accept="application/pdf" onchange="showFileName(this)" />
+        <div class="file-icon">📎</div>
+        <div class="file-label">Click to attach a PDF</div>
+        <div class="file-name" id="fileName"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-send" onclick="sendEmail()">Send email</button>
+    <button class="btn-clear" onclick="clearFields()">Clear</button>
+  </div>
+
+  <div class="result-msg" id="result"></div>
+</div>
+</div>
+
+<script>
+let templatesData = [];
+
+function loadTemplates() {
+  const templates = JSON.parse(localStorage.getItem("templates") || "[]");
+  templatesData = templates;
+  const container = document.getElementById("templateTabs");
+  container.innerHTML = "";
+  if (!templates.length) {
+    container.innerHTML = '<span class="no-templates">No templates yet — <a href="templates.html" style="color:#4f6ef7">create one</a></span>';
+    return;
+  }
+  templates.forEach((t, i) => {
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (i === 0 ? " active" : "");
+    btn.textContent = t.name;
+    btn.dataset.id = t.id;
+    btn.onclick = () => selectTemplate(t.id);
+    container.appendChild(btn);
+  });
+  selectTemplate(templates[0].id, true);
+}
+
+function selectTemplate(id, fillForm = true) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.id == id));
+  if (!fillForm) return;
+  const t = templatesData.find(t => t.id == id);
+  if (!t) return;
+  document.getElementById("subject").value = t.subject || "";
+  document.getElementById("description").value = t.body || "";
+}
+
+function showFileName(input) {
+  document.getElementById("fileName").textContent = input.files[0] ? input.files[0].name : "";
+}
+
+function clearFields() {
+  ["emails","subject","description"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("pdf").value = "";
+  document.getElementById("fileName").textContent = "";
+  if (templatesData.length) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  }
+  hideResult();
+}
+
+function hideResult() {
+  const el = document.getElementById("result");
+  el.style.display = "none"; el.className = "result-msg";
+}
+
+async function sendEmail() {
+  const emails = document.getElementById("emails").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+  const description = document.getElementById("description").value.trim();
+  if (!emails || !subject || !description) { showResult("Please fill in all required fields.", false); return; }
+  const formData = new FormData();
+  formData.append("emails", emails);
+  formData.append("subject", subject);
+  formData.append("description", description);
+  const file = document.getElementById("pdf").files[0];
+  if (file) formData.append("pdf", file);
+  try {
+    const res = await fetch("/send-email", { method: "POST", body: formData });
+    showResult(await res.text(), res.ok);
+  } catch {
+    showResult("Failed to send. Check your connection.", false);
+  }
+}
+
+function showResult(msg, success) {
+  const el = document.getElementById("result");
+  el.textContent = msg; el.style.display = "block";
+  el.className = "result-msg " + (success ? "success" : "error");
+}
+
+loadTemplates();
+</script>
