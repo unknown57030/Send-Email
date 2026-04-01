@@ -51,7 +51,12 @@ app.post("/login", (req, res) => {
 app.post("/send-email", upload.single("pdf"), async (req, res) => {
   try {
     const { emails, subject, description } = req.body;
-    const emailList = emails.split(",").map(e => e.trim());
+    const emailList = [...new Set(
+      emails
+        .split(",")
+        .map(e => e.trim())
+        .filter(e => e)
+    )];
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -63,7 +68,7 @@ app.post("/send-email", upload.single("pdf"), async (req, res) => {
 
     for (const email of emailList) {
       let mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"${process.env.EMAIL_NAME}" <${process.env.EMAIL_USER}>`,
         to: email,
         subject,
         text: description,
@@ -84,7 +89,7 @@ app.post("/send-email", upload.single("pdf"), async (req, res) => {
     res.send("✅ Email sent successfully!");
   } catch (err) {
     console.error("ERROR:", err);
-    res.status(500).send("❌ Failed to send email.");
+    res.status(500).send(`❌ Failed to send email. \n error: ${err.message}`);
   }
 });
 
