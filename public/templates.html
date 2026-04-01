@@ -149,18 +149,9 @@ function loadTemplates() {
       <td class="td-name">${t.name}</td>
       <td class="td-subject">${t.subject}</td>
       <td><div class="td-actions">
-        <button class="btn-edit" data-template='${JSON.stringify(t)}'>Edit</button>
-        <button class="btn-delete" data-id="${t.id}">Delete</button>
+        <button class="btn-edit" onclick='editTemplate(${t.id})'>Edit</button>
+        <button class="btn-delete" onclick='deleteTemplate(${t.id})'>Delete</button>
       </div></td>`;
-
-    // Attach listeners after inserting:
-    tr.querySelector(".btn-edit").addEventListener("click", function() {
-    editTemplate(JSON.parse(this.dataset.template));
-    });
-    tr.querySelector(".btn-delete").addEventListener("click", function() {
-    deleteTemplate(Number(this.dataset.id));
-    });
-
     tbody.appendChild(tr);
   });
 }
@@ -184,7 +175,9 @@ function saveTemplate() {
   resetForm();
 }
 
-function editTemplate(t) {
+function editTemplate(id) {
+  const t = getTemplates().find(t => t.id == id);
+  if (!t) { showToast("Template not found"); return; }
   document.getElementById("templateId").value = t.id;
   document.getElementById("name").value = t.name;
   document.getElementById("subject").value = t.subject;
