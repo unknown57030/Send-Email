@@ -68,7 +68,7 @@ app.post("/send-email", upload.single("pdf"), async (req, res) => {
 
     for (const email of emailList) {
       let mailOptions = {
-        from: `"${process.env.EMAIL_NAME}" <${process.env.EMAIL_USER}>`,
+        from: process.env.EMAIL_USER,
         to: email,
         subject,
         text: description,
